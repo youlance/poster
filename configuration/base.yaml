@@ -1,0 +1,10 @@
+application:
+  port: 6969
+database:
+  host: "localhost"
+  port: 5432
+  username: "actix"
+  password: "password"
+  database_name: "poster"
+auth_client:
+  base_url: "http://localhost:8081"

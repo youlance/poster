@@ -24,7 +24,7 @@ pub struct PostCreate {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PostDelete {
+pub struct PostID {
     pub id: Uuid
 }
 

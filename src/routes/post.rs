@@ -2,7 +2,7 @@ use actix_extract_multipart::{File, Multipart};
 use actix_web::{HttpResponse, Responder, web};
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::models::{PostDelete, PostCreate, Post, PostUpdate};
+use crate::models::{PostID, PostCreate, Post, PostUpdate};
 use tracing::instrument;
 
 
@@ -10,6 +10,9 @@ use tracing::instrument;
 #[instrument(
     name = "Creating a new post",
     skip(new_post, pool)
+    fields(
+        username = %new_post.username
+    )
 )]
 pub async fn upload_post(new_post: Multipart<PostCreate>, pool: web::Data<PgPool>) -> impl Responder {
     let file_extension = match new_post.img_file.file_type().as_str() {
@@ -28,31 +31,37 @@ pub async fn upload_post(new_post: Multipart<PostCreate>, pool: web::Data<PgPool
         Ok(id) => HttpResponse::Ok().body(
             serde_json::to_string(&id).unwrap()
         ),
-
         Err(_) => HttpResponse::InternalServerError().finish()
     }
 }
 
 #[instrument(
     name = "Saving the file in fs",
-    skip(file)
+    skip(file, path),
+    fields(
+    file_path = %path
+    )
 )]
 async fn save_file(file: &File, path: &str) -> std::io::Result<()> {
 
-    tokio::fs::write(path, file.data()).await?;
+    tokio::fs::write(path, file.data()).await
+        .map_err(|e| {
+            tracing::error!("Unable to save file {} : {:?}", path, e);
+            e
+        })?;
 
     Ok(())
 }
 
 #[instrument(
     name = "Inserting the post to the database",
-    skip(pool, new_post)
+    skip(pool, new_post, img_url)
 )]
 async fn insert_post(
     pool: &PgPool,
     new_post: &PostCreate,
     img_url: &str
-) -> Result<PostDelete, sqlx::Error> {
+) -> Result<PostID, sqlx::Error> {
 
     let id = Uuid::new_v4();
     sqlx::query!(
@@ -68,10 +77,11 @@ async fn insert_post(
         .execute(pool)
         .await
         .map_err(|e| {
+            tracing::error!("Failed to execute query {:?}", e);
             e
         })?;
 
-    Ok(PostDelete {id})
+    Ok(PostID {id})
 }
 
 
@@ -79,9 +89,12 @@ async fn insert_post(
 // CRUD: DELETE
 #[instrument(
     name = "Deleting the post",
-    skip(pool)
+    skip(pool),
+    fields(
+        post_id = %post.id
+    )
 )]
-pub async fn delete_post(post: web::Json<PostDelete>, pool: web::Data<PgPool>) -> impl Responder {
+pub async fn delete_post(post: web::Json<PostID>, pool: web::Data<PgPool>) -> impl Responder {
 
     let file_name = match del_post(&post, &pool).await {
         Ok(f) => f,
@@ -89,25 +102,37 @@ pub async fn delete_post(post: web::Json<PostDelete>, pool: web::Data<PgPool>) -
     };
 
     if del_file(file_name).await.is_err() {
-        return HttpResponse::InternalServerError().finish();
+        // don't do anything
+        // return HttpResponse::InternalServerError().finish();
     }
 
     HttpResponse::Ok().finish()
 }
 
 #[instrument(
-    name = "Removing file from fs"
+    name = "Removing file from fs",
+    skip(file_name),
+    fields(
+        file_path = %file_name
+    )
 )]
 async fn del_file(file_name: String) -> std::io::Result<()> {
-    tokio::fs::remove_file(file_name).await?;
+    tokio::fs::remove_file(&file_name).await
+        .map_err(|e| {
+            tracing::error!("Unable to delete file {}: {:?}", file_name, e);
+            e
+        })?;
     Ok(())
 }
 
 #[instrument(
     name = "Deleting post from database",
-    skip(pool)
+    skip(pool),
+    fields(
+        post_id = %post_id.id
+    )
 )]
-async fn del_post(post_id: &PostDelete, pool: &PgPool) -> Result<String, sqlx::Error>
+async fn del_post(post_id: &PostID, pool: &PgPool) -> Result<String, sqlx::Error>
 {
 
     let rec = sqlx::query!(
@@ -115,8 +140,11 @@ async fn del_post(post_id: &PostDelete, pool: &PgPool) -> Result<String, sqlx::E
         post_id.id
     )
         .fetch_one(pool)
-        .await?;
-
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query {:?}", e);
+            e
+        })?;
 
     Ok(format!("{}", rec.img_url))
 }
@@ -124,10 +152,13 @@ async fn del_post(post_id: &PostDelete, pool: &PgPool) -> Result<String, sqlx::E
 
 #[instrument(
     name = "Fetching post from database",
-    skip(pool)
+    skip(pool, post_id),
+    fields(
+    post_id = %post_id.id
+    )
 )]
 pub async fn get_post(
-    post_id: web::Json<PostDelete>,
+    post_id: web::Json<PostID>,
     pool: web::Data<PgPool>
 ) -> impl Responder {
 
@@ -145,7 +176,8 @@ pub async fn get_post(
                 serde_json::to_string(&p).unwrap()
             )
         },
-        Err(_) => {
+        Err(e) => {
+            tracing::error!("Failed to execute query {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
@@ -153,7 +185,10 @@ pub async fn get_post(
 
 #[instrument(
     name = "Updating post in the database",
-    skip(pool)
+    skip(pool, update),
+    fields(
+        post_id = %update.id
+    )
 )]
 pub async fn update_post(
     update: web::Json<PostUpdate>,

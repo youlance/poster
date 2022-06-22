@@ -5,11 +5,10 @@ use tracing::instrument;
 
 #[instrument(
     name = "Getting latest posts",
-    skip(pool)
+    skip(feed, pool)
 )]
 pub async fn get_latest(feed: web::Json<FeedFollowing>, pool: web::Data<PgPool>) -> impl Responder {
 
-    dbg!(&feed);
     let query_result = sqlx::query!(
         r#"
         SELECT * FROM posts
@@ -23,10 +22,12 @@ pub async fn get_latest(feed: web::Json<FeedFollowing>, pool: web::Data<PgPool>)
         .fetch_all(pool.as_ref())
         .await;
 
-    let records = if let Ok(r) = query_result {
-        r
-    } else {
-        return HttpResponse::InternalServerError().finish()
+    let records = match query_result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to execute query {:?}", e);
+            return HttpResponse::InternalServerError().finish()
+        }
     };
 
     let posts: Vec<Post> = records.into_iter()
@@ -41,7 +42,6 @@ pub async fn get_latest(feed: web::Json<FeedFollowing>, pool: web::Data<PgPool>)
             }
         }).collect();
 
-    dbg!(&posts);
 
     let latest = LatestPosts {
         posts
