@@ -2,7 +2,7 @@ application:
   port: 6969
 database:
   host: "localhost"
-  port: 5432
+  port: 5434
   username: "actix"
   password: "password"
   database_name: "poster"
