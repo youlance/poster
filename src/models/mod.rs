@@ -44,3 +44,8 @@ pub struct FeedFollowing {
 pub struct LatestPosts {
     pub posts: Vec<Post>
 }
+
+#[derive(Debug, Serialize)]
+pub struct UserPosts {
+    pub posts: Vec<Post>
+}

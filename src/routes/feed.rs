@@ -48,7 +48,5 @@ pub async fn get_latest(feed: web::Json<FeedFollowing>, pool: web::Data<PgPool>)
     };
 
     HttpResponse::Ok()
-        .body(
-            serde_json::to_string(&latest).unwrap()
-        )
+        .json(latest)
 }

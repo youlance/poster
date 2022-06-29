@@ -7,4 +7,4 @@ database:
   password: "password"
   database_name: "poster"
 auth_client:
-  base_url: "http://localhost:8081"
+  base_url: "http://localhost:8081/auth"

@@ -2,7 +2,7 @@ use actix_extract_multipart::{File, Multipart};
 use actix_web::{HttpResponse, Responder, web};
 use sqlx::PgPool;
 use uuid::Uuid;
-use crate::models::{PostID, PostCreate, Post, PostUpdate};
+use crate::models::{PostID, PostCreate, Post, PostUpdate, UserPosts};
 use tracing::instrument;
 
 
@@ -181,6 +181,55 @@ pub async fn get_post(
             HttpResponse::InternalServerError().finish()
         }
     }
+}
+
+
+
+pub async fn get_use_posts(
+    path: web::Path<(String,)>,
+    pool: web::Data<PgPool>
+) -> impl Responder {
+
+    let username = path.into_inner().0;
+
+    let query_result = sqlx::query!(
+        r#"
+        SELECT * FROM posts
+        WHERE username = $1
+        ORDER BY created_at
+        "#,
+        username
+    )
+        .fetch_all(pool.as_ref())
+        .await;
+
+    let records = match query_result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to execute query {:?}", e);
+            return HttpResponse::InternalServerError().finish()
+        }
+    };
+
+    let posts: Vec<Post> = records.into_iter()
+        .map(|r| {
+            Post {
+                id: r.id,
+                username: r.username,
+                img_url: r.img_url,
+                caption: r.caption,
+                likes: r.likes,
+                created_at: r.created_at
+            }
+        }).collect();
+
+    let user_posts = UserPosts {
+        posts
+    };
+
+    HttpResponse::Ok()
+        .json(user_posts)
+
 }
 
 #[instrument(
