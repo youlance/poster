@@ -1,6 +1,7 @@
 mod post;
 mod feed;
 
+use actix_cors::Cors;
 use actix_web::{HttpResponse, web};
 use actix_web::web::ServiceConfig;
 use crate::auth::Author;
@@ -13,6 +14,7 @@ pub fn app_config(config: &mut ServiceConfig) {
         .route(web::get().to(health));
 
     let posts_resource = web::scope("/posts")
+        .wrap(Cors::permissive())
         .wrap(Author)
         .route("", web::post().to(upload_post))
         .route("", web::delete().to(delete_post))
