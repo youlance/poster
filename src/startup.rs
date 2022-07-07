@@ -1,4 +1,5 @@
 use std::net::TcpListener;
+use actix_cors::Cors;
 use actix_web::dev::Server;
 use actix_web::{App, HttpServer, web};
 use sqlx::PgPool;
@@ -18,6 +19,7 @@ pub fn run(
     let server = HttpServer::new(move || {
 
         App::new()
+            .wrap(Cors::permissive().allow_any_origin().send_wildcard())
             .wrap(TracingLogger::default())
             .configure(app_config)
             .app_data(db_pool.clone())
