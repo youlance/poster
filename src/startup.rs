@@ -19,7 +19,9 @@ pub fn run(
     let server = HttpServer::new(move || {
 
         App::new()
-            .wrap(Cors::permissive().allow_any_origin().send_wildcard())
+            .wrap(Cors::default()
+                  .allow_any_origin()
+                  .send_wildcard())
             .wrap(TracingLogger::default())
             .configure(app_config)
             .app_data(db_pool.clone())
