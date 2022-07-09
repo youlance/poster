@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use actix_extract_multipart::{File, Multipart};
 use actix_web::{HttpResponse, Responder, web};
 use sqlx::PgPool;
@@ -183,7 +184,40 @@ pub async fn get_post(
     }
 }
 
+pub async fn get_single_post(
+    path: web::Path<(String,)>,
+    pool: web::Data<PgPool>
+) -> impl Responder {
+    let id_str = path.into_inner().0;
+    let id: Uuid = match Uuid::from_str(id_str.as_str()) {
+        Ok(id) => id,
+        Err(e) => {
+            tracing::error!("Failed to parse path {} to uuid: {:?}", id_str, e);
+            return HttpResponse::BadRequest().finish();
+        }
+    };
 
+    let post = sqlx::query_as!(
+        Post,
+        r#"SELECT * FROM posts WHERE id = $1"#,
+        id
+    )
+        .fetch_one(pool.as_ref())
+        .await;
+
+    match post {
+        Ok(p) => {
+            HttpResponse::Ok().body(
+                serde_json::to_string(&p).unwrap()
+            )
+        },
+        Err(e) => {
+            tracing::error!("Failed to execute query {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+
+}
 
 pub async fn get_use_posts(
     path: web::Path<(String,)>,

@@ -8,7 +8,7 @@ use actix_web::{HttpResponse, web};
 use actix_web::web::ServiceConfig;
 use crate::auth::Author;
 use crate::routes::feed::get_latest;
-use crate::routes::post::{delete_post, get_post, upload_post, update_post, get_use_posts};
+use crate::routes::post::{delete_post, get_post, upload_post, update_post, get_use_posts, get_single_post};
 use actix_files as fs;
 
 pub fn app_config(config: &mut ServiceConfig) {
@@ -24,6 +24,9 @@ pub fn app_config(config: &mut ServiceConfig) {
         .route("/{username}", web::get().to(get_use_posts))
         .route("", web::patch().to(update_post));
 
+    let post_resource = web::scope("/post")
+        .route("/{id}", web::get().to(get_single_post));
+
 //    let static_files = web::scope("/files")
 //        .route("/{filename}", web::get().to(files));
 
@@ -33,6 +36,7 @@ pub fn app_config(config: &mut ServiceConfig) {
 
     config.service(health_resource);
     config.service(posts_resource);
+    config.service(post_resource);
     config.service(fs::Files::new("/files","./files").show_files_listing());
     config.service(feed_resource);
 }
