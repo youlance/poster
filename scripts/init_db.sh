@@ -21,7 +21,7 @@ DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
 
 DB_NAME="${POSTGRES_DB:=poster}"
 
-DB_PORT="${POSTGRES_PORT:=5434}"
+DB_PORT="${POSTGRES_PORT:=5432}"
 
 if [[ -z "${SKIP_DOCKER}" ]]
 then

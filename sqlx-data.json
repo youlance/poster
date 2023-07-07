@@ -1,0 +1,202 @@
+{
+  "db": "PostgreSQL",
+  "1faad94efcfde1ca17e4f035bd1a30f631bb9018cdc5c8926714b8d721713490": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "img_url",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "caption",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "likes",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n        SELECT * FROM posts\n        WHERE username = ANY($1)\n        ORDER BY created_at\n        LIMIT 10 OFFSET $2\n        "
+  },
+  "4b8bda8c780585cd3915e3e8330f2cc144e46a6bd316756abc4eb08043a4a674": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Uuid"
+        ]
+      }
+    },
+    "query": "\n        UPDATE posts\n        SET caption = $1\n        WHERE id = $2\n        "
+  },
+  "58ec6b1ab3c594dcd301de6f19fd964bcb71a525c1753f578f3c6f43e687e51d": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "img_url",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "caption",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "likes",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT * FROM posts\n        WHERE username = $1\n        ORDER BY created_at\n        "
+  },
+  "b6019471ff1989ef2f0658b0b34e683fdc706751e2bb69043544c9a4d08b5ba0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "img_url",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "caption",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "likes",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "SELECT * FROM posts WHERE id = $1"
+  },
+  "cdeb69e50bcf3d1a1d9e7976c6cb475e7ccd1043b4fec783614e4bec0c3374e3": {
+    "describe": {
+      "columns": [
+        {
+          "name": "img_url",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "DELETE FROM posts WHERE id = $1 RETURNING img_url"
+  },
+  "fda0327e6849673d22389337dd49d486b0d69b3881c354a61c7bab8e0f6e32d5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO posts (id, username, img_url, caption, likes, created_at)\n        VALUES ($1, $2, $3, $4, DEFAULT, DEFAULT)\n        "
+  }
+}
