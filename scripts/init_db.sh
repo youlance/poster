@@ -23,6 +23,8 @@ DB_NAME="${POSTGRES_DB:=poster}"
 
 DB_PORT="${POSTGRES_PORT:=5432}"
 
+DB_ADDR="${POSTGRES_ADDR:=localhost}"
+
 if [[ -z "${SKIP_DOCKER}" ]]
 then
   docker run \
@@ -36,14 +38,14 @@ fi
 
 # Keep pinging Postgres until it's ready to accept commands
 export PGPASSWORD="${DB_PASSWORD}"
-until psql -h "0.0.0.0" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
+until psql -h "${DB_ADDR}" -U "${DB_USER}" -p "${DB_PORT}" -d "postgres" -c '\q'; do
     >&2 echo "Postgres is still unavailable - sleeping"
     sleep 1
 done
 
 >&2 echo "Postgres is up and running on port ${DB_PORT} - running migrations now!"
 
-export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}
+export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_ADDR}:${DB_PORT}/${DB_NAME}
 sqlx database create
 sqlx migrate run
 

@@ -20,16 +20,24 @@ ENV SQLX_OFFLINE true
 # We'll use the release profile to make it fast
 RUN cargo build --release --bin poster
 
+# Let's install sqlx!!!!
+RUN cargo install sqlx-cli
+
 # Runtime Stage
 FROM debian:bullseye-slim AS runtime
 
 WORKDIR /app
 
+# Install Postgres client for migrations
+RUN apt update && apt install -y postgresql-client --no-install-recommends
+# Copy sqlx binary for migrations
+COPY --from=builder /usr/local/cargo/bin/sqlx /usr/local/bin/sqlx
+
 COPY --from=builder /app/target/release/poster poster
 
 COPY configuration configuration
-
-RUN apt update && apt install -y postgresql-client --no-install-recommends
+COPY migrations migrations
+COPY scripts scripts
 
 # this makes docker image to run on 0.0.0.0
 ENV APP_ENVIRONMENT production
