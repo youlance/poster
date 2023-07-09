@@ -33,4 +33,4 @@ COPY configuration configuration
 ENV APP_ENVIRONMENT production
 
 # When `docker run` is executed launch the binary
-ENTRYPOINT ["./poster"]
+CMD ["./poster"]
