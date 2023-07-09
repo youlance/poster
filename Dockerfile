@@ -29,6 +29,8 @@ COPY --from=builder /app/target/release/poster poster
 
 COPY configuration configuration
 
+RUN apt update && apt install -y postgresql-client --no-install-recommends
+
 # this makes docker image to run on 0.0.0.0
 ENV APP_ENVIRONMENT production
 
